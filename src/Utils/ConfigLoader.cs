@@ -13,7 +13,7 @@ public static class ConfigLoader
     // 允許尾逗號
     AllowTrailingCommas = true,
     // 忽略大小寫
-    PropertyNameCaseInsensitive = true
+    PropertyNameCaseInsensitive = true,
   };
 
   /// <summary>
