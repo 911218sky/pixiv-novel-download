@@ -1,69 +1,91 @@
+# GitHub Actions 工作流：自動建置並發布跨平台執行檔
 name: Build and Release
 
+# 觸發條件
 on:
   push:
     tags:
-      - 'v*'
-  workflow_dispatch:
+      - 'v*'  # 當推送 v 開頭的標籤時自動觸發（例如：v1.0.0, v2.1.3）
+  workflow_dispatch:  # 允許在 GitHub Actions 頁面手動觸發
 
 jobs:
+  # 第一個任務：建置多平台執行檔
   build:
     name: Build for ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}  # 在指定的作業系統上執行
     strategy:
       matrix:
+        # 定義要建置的平台矩陣（會並行建置所有平台）
         include:
+          # Windows x64 版本
           - os: windows-latest
-            rid: win-x64
+            rid: win-x64  # .NET Runtime Identifier
             artifact_name: Pixiv-windows-x64
             file_extension: .exe
+          # Linux x64 版本
           - os: ubuntu-latest
             rid: linux-x64
             artifact_name: Pixiv-linux-x64
             file_extension: ''
+          # macOS Intel 版本
           - os: macos-latest
             rid: osx-x64
             artifact_name: Pixiv-macos-x64
             file_extension: ''
+          # macOS Apple Silicon (M1/M2/M3) 版本
           - os: macos-latest
             rid: osx-arm64
             artifact_name: Pixiv-macos-arm64
             file_extension: ''
 
     steps:
+      # 步驟 1：檢出程式碼
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 步驟 2：設定 .NET 9.0 環境
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '9.0.x'  # 安裝 .NET 9.0 最新版本
 
+      # 步驟 3：還原 NuGet 相依套件
       - name: Restore dependencies
         run: dotnet restore
 
+      # 步驟 4：建置並發布應用程式
       - name: Build and Publish
         run: |
           dotnet publish -c Release -r ${{ matrix.rid }} --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=true -o ./publish/${{ matrix.artifact_name }}
+          # -c Release: 使用 Release 組態（優化效能）
+          # -r ${{ matrix.rid }}: 指定目標平台
+          # --self-contained true: 包含 .NET 運行時（使用者無需安裝 .NET）
+          # -p:PublishSingleFile=true: 打包成單一執行檔
+          # -p:PublishTrimmed=true: 裁剪未使用的程式碼（減小檔案大小）
+          # -o: 輸出目錄
 
+      # 步驟 5：複製設定檔範本到輸出目錄
       - name: Copy appsettings.example.jsonc
         shell: bash
         run: |
           cp appsettings.example.jsonc ./publish/${{ matrix.artifact_name }}/appsettings.jsonc
 
+      # 步驟 6：建立壓縮檔（Windows 版本使用 ZIP）
       - name: Create Archive (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest'  # 只在 Windows 上執行
         shell: pwsh
         run: |
           Compress-Archive -Path ./publish/${{ matrix.artifact_name }}/* -DestinationPath ./${{ matrix.artifact_name }}.zip
 
+      # 步驟 7：建立壓縮檔（Linux/macOS 版本使用 tar.gz）
       - name: Create Archive (Linux/macOS)
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-latest'  # 只在非 Windows 平台執行
         run: |
           cd ./publish/${{ matrix.artifact_name }}
-          chmod +x Pixiv${{ matrix.file_extension }}
-          tar -czf ../../${{ matrix.artifact_name }}.tar.gz *
+          chmod +x Pixiv${{ matrix.file_extension }}  # 設定執行權限
+          tar -czf ../../${{ matrix.artifact_name }}.tar.gz *  # 建立 gzip 壓縮的 tar 檔
 
+      # 步驟 8：上傳建置產物（供下一個任務使用）
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -71,33 +93,37 @@ jobs:
           path: |
             ${{ matrix.artifact_name }}.zip
             ${{ matrix.artifact_name }}.tar.gz
-          if-no-files-found: ignore
+          if-no-files-found: ignore  # 忽略找不到檔案的錯誤（因為每個平台只有一種格式）
 
+  # 第二個任務：建立 GitHub Release 並上傳所有壓縮檔
   release:
     name: Create Release
-    needs: build
+    needs: build  # 等待 build 任務完成
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write  # 需要寫入權限以建立 Release
 
     steps:
+      # 步驟 1：下載所有建置產物
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          path: artifacts  # 下載到 artifacts 目錄
 
+      # 步驟 2：顯示下載的檔案結構（用於除錯）
       - name: Display structure of downloaded files
         run: ls -R artifacts
 
+      # 步驟 3：建立 GitHub Release 並上傳檔案
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
             artifacts/**/*.zip
             artifacts/**/*.tar.gz
-          draft: false
-          prerelease: false
-          generate_release_notes: true
+          draft: false  # 不建立草稿，直接發布
+          prerelease: false  # 不標記為預發布版本
+          generate_release_notes: true  # 自動產生 Release 說明（基於 commit 訊息）
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 使用 GitHub 自動提供的 Token
 
