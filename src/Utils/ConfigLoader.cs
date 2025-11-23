@@ -14,6 +14,8 @@ public static class ConfigLoader
     AllowTrailingCommas = true,
     // 忽略大小寫
     PropertyNameCaseInsensitive = true,
+    // 使用 Source Generator 支持裁剪和 AOT
+    TypeInfoResolver = PixivJsonContext.Default
   };
 
   /// <summary>
@@ -38,7 +40,7 @@ public static class ConfigLoader
     if (path is null) return [];
 
     var text = await File.ReadAllTextAsync(path, Encoding.UTF8);
-    return JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(text, _jsonOptions) ?? [];
+    return JsonSerializer.Deserialize(text, PixivJsonContext.Default.DictionaryStringJsonElement) ?? [];
   }
 
   // 取值工具

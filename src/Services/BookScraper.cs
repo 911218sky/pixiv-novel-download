@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Pixiv.Models;
 using Pixiv.Models.Series;
+using Pixiv.Utils;
 
 namespace Pixiv.Services;
 
@@ -13,7 +14,8 @@ public sealed class BookScraper(HttpFetcher http)
   private const int SeriesPageLimit = 30;
   private static readonly JsonSerializerOptions SeriesJsonOptions = new()
   {
-    PropertyNameCaseInsensitive = true
+    PropertyNameCaseInsensitive = true,
+    TypeInfoResolver = PixivJsonContext.Default
   };
 
   public async Task<BookInfo> FetchBookInfoAsync(string homeUrl, bool sortChapters = false)
@@ -57,7 +59,7 @@ public sealed class BookScraper(HttpFetcher http)
     {
       var apiUrl = $"{BaseUrl}/ajax/novel/series_content/{seriesId}?limit={SeriesPageLimit}&last_order={lastOrder}&order_by=asc&lang=zh_tw";
       var json = await _http.GetStringAsync(apiUrl, referer: homeUrl);
-      var response = JsonSerializer.Deserialize<SeriesContentResponse?>(json, SeriesJsonOptions);
+      var response = JsonSerializer.Deserialize(json, PixivJsonContext.Default.SeriesContentResponse);
       var novels = response?.Body?.Thumbnails?.Novel ?? [];
 
       if (novels.Count == 0)

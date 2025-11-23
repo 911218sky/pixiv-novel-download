@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Serilog;
 using Pixiv.Models.Novel;
+using Pixiv.Utils;
 
 namespace Pixiv.Services;
 
@@ -13,7 +14,8 @@ public sealed class ChapterExtractor(HttpFetcher http)
     private const string BaseUrl = "https://www.pixiv.net";
     private static readonly JsonSerializerOptions NovelJsonOptions = new()
     {
-        PropertyNameCaseInsensitive = true
+        PropertyNameCaseInsensitive = true,
+        TypeInfoResolver = PixivJsonContext.Default
     };
 
     public static string BeautifyContent(string content)
@@ -43,7 +45,7 @@ public sealed class ChapterExtractor(HttpFetcher http)
             throw new InvalidOperationException("找不到 novelId");
         var apiUrl = $"{BaseUrl}/ajax/novel/{novelId}?lang=zh_tw";
         var json = await _http.GetStringAsync(apiUrl, referer: referer, encoding: Encoding);
-        var response = JsonSerializer.Deserialize<NovelResponse?>(json, NovelJsonOptions);
+        var response = JsonSerializer.Deserialize(json, PixivJsonContext.Default.NovelResponse);
 
         var content = response?.Body?.Content;
         var title = response?.Body?.Title?.Trim() ?? string.Empty;

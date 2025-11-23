@@ -3,6 +3,8 @@ bin/
 obj/
 /Pixiv.exe
 *.log
+test-publish*/
+final-test*/
 
 # NuGet
 .package/
