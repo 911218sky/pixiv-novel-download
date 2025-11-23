@@ -1,75 +1,86 @@
-# Pixiv Novel Archivist
+# Pixiv Novel Downloader
 
-Pixiv Novel Archivist is a .NET 9 console utility that turns any Pixiv novel URL (single chapter or full series) into a clean UTF-8 text file. It automates the heavy lifting—authenticating with your Pixiv cookie, enumerating every chapter in a series, throttling and retrying HTTP calls with Polly, and formatting the final manuscript into a reader-friendly document.
+A simple tool to download Pixiv novels as TXT files.
 
-## Features
+## ✨ Features
 
-- Full-series crawler that resolves every chapter via Pixiv's AJAX endpoints.
-- Single-chapter download path for ad-hoc grabs.
-- Configurable concurrency, timeout, and inter-request delays to respect Pixiv rate limits.
-- Cookie-aware HTTP client with automatic decompression and resilient retries.
-- Output normalization that trims whitespace and inserts chapter headers in Traditional Chinese typography.
-- Portable scripts (`build.bat`, `run.bat`, `restore.bat`) for Windows users; native `dotnet` CLI support on macOS/Linux.
+- 📚 Download single chapters or entire series
+- 🚀 Fast multi-threaded downloads
+- 🔐 Cookie-based authentication for private novels
+- 📝 Clean UTF-8 text file output
 
-## Prerequisites
+## 🚀 Quick Start
 
-- [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
-- A Pixiv account cookie (copy the value of the `PHPSESSID` cookie after logging in)
-- Windows Terminal or any shell that can run `dotnet` commands
+### 1. Requirements
 
-## Getting Started
+- Install [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- A Pixiv account
 
-1. **Install dependencies**
-   ```bash
-   dotnet restore
-   ```
-2. **Copy the configuration template**
-   ```bash
-   copy appsettings.example.jsonc appsettings.jsonc
-   ```
-   Edit `appsettings.jsonc` and fill in your Pixiv cookie plus any custom limits.
-3. **Run the CLI**
-   ```bash
-   dotnet run --project Pixiv.csproj
-   ```
-   When prompted, paste a Pixiv novel URL such as `https://www.pixiv.net/novel/series/11713692`.
+### 2. Get Your Pixiv Cookie
 
-The resulting `.txt` file is written to the folder specified by `OutputDir` (defaults to `data/`).
+1. Log in to [Pixiv](https://www.pixiv.net/)
+2. Press F12 to open Developer Tools
+3. Go to "Application" → "Cookies"
+4. Copy the value of `PHPSESSID`
 
-## Configuration
+### 3. Configuration
 
-| Key              | Default | Description |
-|------------------|---------|-------------|
-| `DefaultTimeoutMs` | 15000 | Per-request timeout in milliseconds. |
-| `Concurrency`    | 5       | Maximum parallel chapter downloads. |
-| `OutputDir`      | `data`  | Folder where `.txt` exports are written. |
-| `SortChapters`   | `false` | Reserved for future custom sorting (currently passthrough). |
-| `RequestDelayMs` | 1000    | Delay injected between requests to avoid throttling. |
-| `Cookie`         | `""`    | Pixiv cookie header; set to your `PHPSESSID` to access locked content. |
+Copy the configuration template:
 
-## Project Overview
+```bash
+copy appsettings.example.jsonc appsettings.jsonc
+```
 
-The application follows a classic layered console layout:
-- The entry point (`Program.cs`) wires up logging, configuration loading, and the interactive prompt.
-- Service classes handle network access, scraping Pixiv metadata, extracting chapter bodies, and writing output files with concurrency control.
-- Lightweight model records capture Pixiv API responses, while a single utility manages JSONC configuration and defaults.
+Edit `appsettings.jsonc` and paste your cookie:
 
-This keeps the codebase small and approachable while mirroring patterns used in larger .NET CLI projects.
+```json
+{
+  "Cookie": "your_PHPSESSID_value_here"
+}
+```
 
-## Usage Notes
+### 4. Run
 
-- The tool auto-detects whether a URL represents a single chapter (`/novel/show.php?id=...`) or an entire series (`/novel/series/...`).
-- Each chapter is fetched via `https://www.pixiv.net/ajax/novel/{id}` with the provided cookie and referer.
-- Logs are emitted via Serilog; set the console log level inside `Program.cs` if you need more/less verbosity.
-- Use `build.bat` / `run.bat` for scripted workflows, or `dotnet publish -c Release` to generate a standalone binary.
+**Windows:**
+```bash
+run.bat
+```
 
-## Troubleshooting
+**Other platforms:**
+```bash
+dotnet run
+```
 
-- **HTTP 429 or repeated retries**: Increase `RequestDelayMs` and/or lower `Concurrency`.
-- **Empty output file**: Ensure the cookie is valid and the novel isn't private.
-- **Garbled characters**: The app writes UTF-8 without BOM; open the file with an editor that supports UTF-8 (VS Code, Notepad++, etc.).
+Enter a novel URL, for example:
+- Series: `https://www.pixiv.net/novel/series/11713692`
+- Single chapter: `https://www.pixiv.net/novel/show.php?id=26333534`
 
-## License
+Downloaded files will be saved to the `data` folder.
 
-No explicit license file is included yet. If you plan to share the code publicly, consider adding an MIT, Apache-2.0, or other license that matches your intentions.
+## ⚙️ Configuration Options
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `Cookie` | - | Your Pixiv PHPSESSID cookie |
+| `Concurrency` | 5 | Number of chapters to download simultaneously |
+| `RequestDelayMs` | 1000 | Delay between requests (milliseconds) |
+| `OutputDir` | `data` | Output folder |
+| `DefaultTimeoutMs` | 15000 | Request timeout (milliseconds) |
+
+## 💡 Troubleshooting
+
+**Download fails or too slow?**
+- Increase `RequestDelayMs` (e.g., to 2000)
+- Decrease `Concurrency` (e.g., to 3)
+
+**Empty output file?**
+- Verify your cookie is correct
+- Check if the novel is private or deleted
+
+**Garbled text?**
+- Open with a UTF-8 compatible editor (VS Code, Notepad++, etc.)
+
+## 📄 License
+
+This project is licensed under the GNU Lesser General Public License v3.0 (LGPL-3.0). See the [LICENSE](LICENSE) file for details.
 
