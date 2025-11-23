@@ -57,6 +57,7 @@ public static class ConfigLoader
       => TryGet(cfg, key, out double v) ? v : @default;
 
   // 通用 TryGet
+  [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "基本类型已通过上方 if 处理，泛型反序列化仅作后备")]
   public static bool TryGet<T>(Dictionary<string, JsonElement> cfg, string key, out T? value)
   {
     value = default;
@@ -77,8 +78,10 @@ public static class ConfigLoader
       {
         value = (T?)(object)el.GetBoolean(); return true;
       }
-      // 其他型別走反序列化
+      // 其他型別走反序列化（很少使用，常用类型已在上方处理）
+      #pragma warning disable IL2026
       value = el.Deserialize<T>(_jsonOptions);
+      #pragma warning restore IL2026
       return value is not null;
     }
     catch

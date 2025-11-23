@@ -21,7 +21,9 @@ namespace Pixiv.Utils;
 [JsonSerializable(typeof(IReadOnlyList<NovelInfo>))]
 [JsonSourceGenerationOptions(
     PropertyNameCaseInsensitive = true,
-    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    ReadCommentHandling = JsonCommentHandling.Skip,  // 允許 // 和 /* */ 註解
+    AllowTrailingCommas = true  // 允許尾逗號
 )]
 internal partial class PixivJsonContext : JsonSerializerContext { }
 
