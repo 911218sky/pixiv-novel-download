@@ -1,0 +1,103 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            artifact_name: Pixiv-windows-x64
+            file_extension: .exe
+          - os: ubuntu-latest
+            rid: linux-x64
+            artifact_name: Pixiv-linux-x64
+            file_extension: ''
+          - os: macos-latest
+            rid: osx-x64
+            artifact_name: Pixiv-macos-x64
+            file_extension: ''
+          - os: macos-latest
+            rid: osx-arm64
+            artifact_name: Pixiv-macos-arm64
+            file_extension: ''
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build and Publish
+        run: |
+          dotnet publish -c Release -r ${{ matrix.rid }} --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=true -o ./publish/${{ matrix.artifact_name }}
+
+      - name: Copy appsettings.example.jsonc
+        shell: bash
+        run: |
+          cp appsettings.example.jsonc ./publish/${{ matrix.artifact_name }}/appsettings.jsonc
+
+      - name: Create Archive (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path ./publish/${{ matrix.artifact_name }}/* -DestinationPath ./${{ matrix.artifact_name }}.zip
+
+      - name: Create Archive (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        run: |
+          cd ./publish/${{ matrix.artifact_name }}
+          chmod +x Pixiv${{ matrix.file_extension }}
+          tar -czf ../../${{ matrix.artifact_name }}.tar.gz *
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            ${{ matrix.artifact_name }}.zip
+            ${{ matrix.artifact_name }}.tar.gz
+          if-no-files-found: ignore
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/**/*.zip
+            artifacts/**/*.tar.gz
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
