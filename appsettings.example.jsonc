@@ -1,0 +1,14 @@
+{
+  // HTTP 請求超時時間（毫秒）
+  "DefaultTimeoutMs": 15000,
+  // 同時下載章節數量
+  "Concurrency": 5,
+  // 輸出文字檔案的資料夾
+  "OutputDir": "data",
+  // 下載前是否排序章節
+  "SortChapters": false,
+  // HTTP 請求之間的延遲時間（毫秒）
+  "RequestDelayMs": 1000,
+  // Pixiv Cookie
+  "Cookie": "YOUR_PIXIV_COOKIE"
+}

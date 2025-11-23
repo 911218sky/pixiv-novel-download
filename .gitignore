@@ -1,0 +1,34 @@
+# Build artifacts
+bin/
+obj/
+/Pixiv.exe
+*.log
+
+# NuGet
+.package/
+*.nupkg
+*.snupkg
+*.nuspec
+
+# User-specific files
+*.user
+*.suo
+*.userprefs
+.vs/
+
+# Configuration & cache
+appsettings.json
+appsettings.jsonc
+appsettings.Development.jsonc
+data/
+*.cache/
+
+# OS / tooling noise
+Thumbs.db
+Desktop.ini
+*.DS_Store
+
+# Rider / VS Code
+.idea/
+.history/
+.vscode/
