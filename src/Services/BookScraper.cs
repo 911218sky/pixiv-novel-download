@@ -2,7 +2,6 @@ using HtmlAgilityPack;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Pixiv.Models;
-using Pixiv.Models.Series;
 using Pixiv.Utils;
 
 namespace Pixiv.Services;
@@ -12,11 +11,6 @@ public sealed class BookScraper(HttpFetcher http)
   private readonly HttpFetcher _http = http;
   private const string BaseUrl = "https://www.pixiv.net";
   private const int SeriesPageLimit = 30;
-  private static readonly JsonSerializerOptions SeriesJsonOptions = new()
-  {
-    PropertyNameCaseInsensitive = true,
-    TypeInfoResolver = PixivJsonContext.Default
-  };
 
   public async Task<BookInfo> FetchBookInfoAsync(string homeUrl, bool sortChapters = false)
   {

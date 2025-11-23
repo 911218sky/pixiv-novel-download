@@ -2,7 +2,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Serilog;
-using Pixiv.Models.Novel;
 using Pixiv.Utils;
 
 namespace Pixiv.Services;
@@ -12,11 +11,6 @@ public sealed class ChapterExtractor(HttpFetcher http)
     private readonly HttpFetcher _http = http;
     private const string Encoding = "utf-8";
     private const string BaseUrl = "https://www.pixiv.net";
-    private static readonly JsonSerializerOptions NovelJsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        TypeInfoResolver = PixivJsonContext.Default
-    };
 
     public static string BeautifyContent(string content)
     {
