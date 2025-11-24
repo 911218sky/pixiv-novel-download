@@ -35,7 +35,7 @@ Edit `appsettings.jsonc` and paste your cookie:
 
 ```json
 {
-  "Cookie": "your_PHPSESSID_value_here"
+  "Cookie": "PHPSESSID=your_PHPSESSID_value_here"
 }
 ```
 
