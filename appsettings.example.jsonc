@@ -10,5 +10,5 @@
   // HTTP 請求之間的延遲時間（毫秒）
   "RequestDelayMs": 1000,
   // Pixiv Cookie
-  "Cookie": "YOUR_PIXIV_COOKIE"
+  "Cookie": "PHPSESSID=YOUR_PIXIV_COOKIE"
 }
